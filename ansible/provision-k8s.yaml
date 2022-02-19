@@ -1,0 +1,162 @@
+---
+- name: Configure our Server
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Connect to GKE cluster
+      shell: gcloud container clusters get-credentials final-gke-cluster --region europe-west3 --project ahmed-emad-project
+
+
+    - name: Create a k8s namespace
+      k8s:
+        name: ahmed-jenkins
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create a deployment object by definition module
+      k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: ahmed-docker
+            namespace: ahmed-jenkins
+            labels:
+              app: ahmed-docker
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: ahmed-docker
+            template:
+              metadata:
+                labels:
+                  app: ahmed-docker
+              spec:
+                containers:
+                - name: ahmed-docker-container
+                  image: ahmedemad111/graduation-project
+                  ports:
+                  - containerPort: 80
+
+
+
+    - name: Create an external service object by definition module
+      k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: ahmed-service
+            namespace: ahmed-jenkins
+          spec:
+            selector:
+              app: ahmed-docker
+            type: LoadBalancer  
+            ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 80
+                nodePort: 30000
+
+
+
+
+    - name: Install Java Requirements
+      apt:
+        update_cache: yes
+        name: default-jdk
+      become: yes
+
+    - name: Install Jenkins
+      shell: | 
+        wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
+        sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+        sudo apt-get update -y
+        sudo apt-get install jenkins -y
+
+    - name: Run Jenkins
+      shell: /etc/init.d/jenkins start
+      become: yes
+
+
+
+
+
+    - name: Create jenkins deployment object by definition module
+      k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: jenkins
+            labels:
+              app: jenkins
+            namespace: ahmed-jenkins
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: jenkins
+            strategy: {}
+            template:
+              metadata:
+                labels:
+                  app: jenkins
+              spec:
+                containers:
+                - image: jenkins/jenkins:lts-jdk11
+                  name: jenkins
+                  resources: {}
+                  ports:
+                  - containerPort: 8080
+                  - containerPort: 50000
+                  readinessProbe:
+                    failureThreshold: 5
+                    httpGet:
+                      path: /login
+                      port: 8080
+                      scheme: HTTP
+                    periodSeconds: 10
+                    successThreshold: 2
+                    timeoutSeconds: 5
+                  volumeMounts:
+                  - mountPath: /var/run/docker.sock
+                    name: docker-sock
+                volumes:
+                - name: docker-sock
+                  hostPath:
+                          path: /var/run/docker.sock
+          status: {}
+
+
+
+
+
+    - name: Create jenkins Load Balancer service by definition module
+      k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            labels:
+              app: jenkins
+            name: jenkins
+            namespace: ahmed-jenkins
+          spec:
+            ports:
+            - name: jenkins-service
+              port: 8080
+              protocol: TCP
+              targetPort: 8080
+            selector:
+              app: jenkins
+            type: LoadBalancer
+          status:
+            loadBalancer: {}
+

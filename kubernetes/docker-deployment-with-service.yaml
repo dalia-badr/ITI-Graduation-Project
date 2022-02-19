@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ahmed-docker
+  labels:
+    app: ahmed-docker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ahmed-docker
+  template:
+    metadata:
+      labels:
+        app: ahmed-docker
+    spec:
+      containers:
+      - name: ahmed-docker-container
+        image: ahmedemad111/graduation-project
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ahmed-service
+spec:
+  selector:
+    app: ahmed-docker
+  type: LoadBalancer  
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30000

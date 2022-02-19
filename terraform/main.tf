@@ -9,8 +9,8 @@ resource "google_project_iam_binding" "ahmed-binding" {
   project = "ahmed-emad-project"
   role    = "roles/container.admin"
   depends_on = [
-         google_service_account.ahmed-SA
-     ]
+    google_service_account.ahmed-SA
+  ]
   members = [
     "serviceAccount:${google_service_account.ahmed-SA.email}"
   ]
@@ -66,17 +66,17 @@ resource "google_compute_router_nat" "ahmed-nat" {
   }
 }
 
-# private VM 
+# # private VM 
 resource "google_compute_instance" "ahmed-private-vm" {
   name         = "final-instance"
   machine_type = "e2-micro"
   zone         = "europe-west3-a"
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-9"
+      image = "ubuntu-os-cloud/ubuntu-2004-lts"
     }
   }
-  
+
   network_interface {
     network    = google_compute_network.ahmed-vpc-network.id
     subnetwork = google_compute_subnetwork.ahmed-public-subnet.id
@@ -85,8 +85,39 @@ resource "google_compute_instance" "ahmed-private-vm" {
   service_account {
     email  = google_service_account.ahmed-SA.email
     scopes = ["cloud-platform"]
-  } 
+  }
+
+
+  metadata_startup_script = <<SCRIPT
+    
+
+    #to install kubectl CLI
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl";
+    curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256";
+    sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl;
+
+    #to get latest updated repos
+    sudo apt-get update;
+    
+    #to install Ansible
+    sudo apt-get install -y ansible;
+
+    #to get latest updated repos
+    sudo apt-get update;
+
+    #to install pip3
+    sudo apt -y install python3-pip;
+    
+    #to install required modules
+    sudo pip install openshift pyyaml kubernetes;
+
+    #to fix Ansible playbook errors
+    sudo pip install -Iv kubernetes==11.0;
+
+    SCRIPT
 }
+
+
 
 # firewall rule to enforce the VM to be private by allowing access only through  IAP
 resource "google_compute_firewall" "ahmed-FW" {
@@ -118,11 +149,11 @@ resource "google_container_cluster" "ahmed-private-cluster" {
   location   = "europe-west3"
   network    = google_compute_network.ahmed-vpc-network.id
   subnetwork = google_compute_subnetwork.ahmed-private-subnet.id
- 
- # creating the least possible node pool
+
+  # creating the least possible node pool
   remove_default_node_pool = true
   initial_node_count       = 1
-  
+
   private_cluster_config {
     master_ipv4_cidr_block  = "172.16.0.0/28"
     enable_private_nodes    = true
