@@ -14,53 +14,53 @@
         kind: Namespace
         state: present
 
-    - name: Create a deployment object by definition module
-      k8s:
-        state: present
-        definition:
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: ahmed-docker
-            namespace: ahmed-jenkins
-            labels:
-              app: ahmed-docker
-          spec:
-            replicas: 1
-            selector:
-              matchLabels:
-                app: ahmed-docker
-            template:
-              metadata:
-                labels:
-                  app: ahmed-docker
-              spec:
-                containers:
-                - name: ahmed-docker-container
-                  image: ahmedemad111/graduation-project
-                  ports:
-                  - containerPort: 80
+    # - name: Create a deployment object by definition module
+    #   k8s:
+    #     state: present
+    #     definition:
+    #       apiVersion: apps/v1
+    #       kind: Deployment
+    #       metadata:
+    #         name: ahmed-docker
+    #         namespace: ahmed-jenkins
+    #         labels:
+    #           app: ahmed-docker
+    #       spec:
+    #         replicas: 1
+    #         selector:
+    #           matchLabels:
+    #             app: ahmed-docker
+    #         template:
+    #           metadata:
+    #             labels:
+    #               app: ahmed-docker
+    #           spec:
+    #             containers:
+    #             - name: ahmed-docker-container
+    #               image: ahmedemad111/graduation-project
+    #               ports:
+    #               - containerPort: 80
 
 
 
-    - name: Create an external service object by definition module
-      k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: ahmed-service
-            namespace: ahmed-jenkins
-          spec:
-            selector:
-              app: ahmed-docker
-            type: LoadBalancer  
-            ports:
-              - protocol: TCP
-                port: 80
-                targetPort: 80
-                nodePort: 30000
+    # - name: Create an external service object by definition module
+    #   k8s:
+    #     state: present
+    #     definition:
+    #       apiVersion: v1
+    #       kind: Service
+    #       metadata:
+    #         name: ahmed-service
+    #         namespace: ahmed-jenkins
+    #       spec:
+    #         selector:
+    #           app: ahmed-docker
+    #         type: LoadBalancer  
+    #         ports:
+    #           - protocol: TCP
+    #             port: 80
+    #             targetPort: 80
+    #             nodePort: 30000
 
 
 
