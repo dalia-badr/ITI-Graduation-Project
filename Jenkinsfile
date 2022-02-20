@@ -6,7 +6,7 @@ pipeline {
         script {
         withCredentials([usernamePassword(credentialsId: 'Dockerhub-credentials :)', passwordVariable: 'dockerhub-password ', usernameVariable: 'dockerhub-user')]) {
           sh """
-              docker login -u ${dockerhub-user} -p ${dockerhub-password}
+              docker login -u ${dockeruser} -p ${dockerpassword}
               cd docker
               docker build -t ahmedemad111/graduation-project:2 .
               docker push ahmedemad111/graduation-project:2
@@ -33,3 +33,7 @@ pipeline {
     }
   }
 }
+
+
+
+
