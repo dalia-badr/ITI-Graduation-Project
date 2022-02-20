@@ -71,16 +71,16 @@
         name: default-jdk
       become: yes
 
-    - name: Install Jenkins
-      shell: | 
-        wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
-        sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
-        sudo apt-get update -y
-        sudo apt-get install jenkins -y
+    # - name: Install Jenkins
+    #   shell: | 
+    #     wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
+    #     sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+    #     sudo apt-get update -y
+    #     sudo apt-get install jenkins -y
 
-    - name: Run Jenkins
-      shell: /etc/init.d/jenkins start
-      become: yes
+    # - name: Run Jenkins
+    #   shell: /etc/init.d/jenkins start
+    #   become: yes
 
 
 
@@ -93,7 +93,7 @@
           apiVersion: apps/v1
           kind: Deployment
           metadata:
-            name: jenkins
+            name: jenkins-master
             labels:
               app: jenkins
             namespace: ahmed-jenkins
@@ -109,12 +109,14 @@
                   app: jenkins
               spec:
                 containers:
-                - image: jenkins/jenkins:lts-jdk11
-                  name: jenkins
+                - image: jenkins/jenkins:lts
+                  name: jenkins-master
                   resources: {}
                   ports:
-                  - containerPort: 8080
-                  - containerPort: 50000
+                    - name: http-port
+                      containerPort: 8080
+                    - name: workers-port
+                      containerPort: 50000
                   readinessProbe:
                     failureThreshold: 5
                     httpGet:
@@ -160,3 +162,80 @@
           status:
             loadBalancer: {}
 
+
+
+    - name: Create jenkins cluster ip service to communicate with slave
+      k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: slave-service
+            namespace: ahmed-jenkins 
+          spec:
+            type: ClusterIP
+            ports:
+              - port: 50000
+                targetPort: 50000
+            selector:
+              app: jenkins
+
+
+
+    # - name: Create jenkins slavce 
+    #   k8s:
+    #     state: present
+    #     definition:
+    #       apiVersion: apps/v1
+    #       kind: Deployment
+    #       metadata:
+    #         namespace: ahmed-jenkins
+    #         name: jenkins-slave
+    #         labels:
+    #           app: jenkins-slave
+          
+    #       spec:
+    #         replicas: 1
+    #         selector:
+    #           matchLabels:
+    #             app: jenkins-slave
+    #         template:
+    #           metadata:
+    #             labels:
+    #               app: jenkins-slave
+    #           spec:
+    #             containers:
+    #             - image: kareemelkasaby/jenkins-slave-java-11
+    #               name: jenkins-slave
+    #               imagePullPolicy: Always
+    #               ports:
+    #               - containerPort: 22
+    #               volumeMounts:
+    #               - mountPath: /var/run/docker.sock
+    #                 name: docker-sock
+    #             volumes: 
+    #             - name: docker-sock
+    #               hostPath:
+    #                       path: /var/run/docker.sock
+
+
+
+    # - name: Create service for jenkins slavce 
+    #   k8s:
+    #     state: present
+    #     definition:
+    #       apiVersion: v1
+    #       kind: Service
+    #       metadata:
+    #         name: jenkins-slave-service
+    #         namespace: ahmed-jenkins
+    #       spec:
+    #         ports:
+    #         - port: 22
+    #           protocol: TCP
+    #           targetPort: 22
+    #         selector:
+    #           app: jenkins-slave
+
+              
