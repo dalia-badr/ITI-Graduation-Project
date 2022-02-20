@@ -69,7 +69,7 @@ resource "google_compute_router_nat" "ahmed-nat" {
 # # private VM 
 resource "google_compute_instance" "ahmed-private-vm" {
   name         = "final-instance"
-  machine_type = "e2-micro"
+  machine_type = "e2-medium"
   zone         = "europe-west3-a"
   boot_disk {
     initialize_params {
@@ -113,6 +113,20 @@ resource "google_compute_instance" "ahmed-private-vm" {
 
     #to fix Ansible playbook errors
     sudo pip install -Iv kubernetes==11.0;
+    
+    #to install docker
+    sudo apt update;
+    sudo apt-get install apt-transport-https ca-certificates curl software-properties-common -y;
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -;
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  $(lsb_release -cs)  stable";
+    sudo apt update;
+    sudo apt-get install docker-ce -y;
+    sudo systemctl start docker;
+    sudo systemctl enable docker;
+    
+    #to install Java
+    sudo apt install default-jre -y;
+
 
     SCRIPT
 }
@@ -126,7 +140,7 @@ resource "google_compute_firewall" "ahmed-FW" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "22"]
+    ports    = ["80", "22","8080"]
   }
   direction     = "INGRESS"
   source_ranges = ["35.235.240.0/20"]
@@ -181,7 +195,7 @@ resource "google_container_node_pool" "ahmed-preemptible-nodes" {
 
   node_config {
     preemptible  = false
-    machine_type = "e2-micro"
+    machine_type = "e2-medium"
 
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
     service_account = google_service_account.ahmed-SA.email

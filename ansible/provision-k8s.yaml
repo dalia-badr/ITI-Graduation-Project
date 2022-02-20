@@ -65,11 +65,11 @@
 
 
 
-    - name: Install Java Requirements
-      apt:
-        update_cache: yes
-        name: default-jdk
-      become: yes
+    # - name: Install Java Requirements
+    #   apt:
+    #     update_cache: yes
+    #     name: default-jdk
+    #   become: yes
 
     # - name: Install Jenkins
     #   shell: | 
