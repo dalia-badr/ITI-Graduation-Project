@@ -8,8 +8,8 @@ pipeline {
           sh """
               docker login -u ${dockeruser} -p ${dockerpassword}
               cd docker
-              docker build -t ahmedemad111/graduation-project:2 .
-              docker push ahmedemad111/graduation-project:2
+              docker build -t daliabadr/dalia-graduation-project .
+              docker push daliabadr/dalia-graduation-project
           """
         }
         
@@ -22,7 +22,7 @@ pipeline {
        script {
 
           sh """
-              gcloud container clusters get-credentials final-gke-cluster --region europe-west3 --project ahmed-emad-project
+              gcloud container clusters get-credentials final-gke-cluster --region europe-west3 --project starry-compiler-344415
               cd kubernetes
               kubectl apply -f docker-deployment-with-service.yaml -n ahmed-jenkins
           """
