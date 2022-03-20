@@ -4,7 +4,7 @@ pipeline {
     stage('Build and push to Dockerhub') {
       steps {
         script {
-        withCredentials([usernamePassword(credentialsId: 'docker-credentials', passwordVariable: 'dockerpassword', usernameVariable: 'dockeruser')]) {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'dockerpassword', usernameVariable: 'dockeruser')]) {
           sh """
               docker login -u ${dockeruser} -p ${dockerpassword}
               cd docker
