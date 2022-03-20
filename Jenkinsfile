@@ -24,7 +24,7 @@ pipeline {
           sh """
               gcloud container clusters get-credentials final-gke-cluster --region europe-west3 --project starry-compiler-344415
               cd kubernetes
-              kubectl apply -f docker-deployment-with-service.yaml -n ahmed-jenkins
+              kubectl apply -f docker-deployment-with-service.yaml -n dalia-jenkins
           """
         
         
